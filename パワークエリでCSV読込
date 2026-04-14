@@ -1,0 +1,36 @@
+let
+      フォルダパス = Excel.CurrentWorkbook()
+                      {[Name="FolderPath"]}[Content]{0}[列1],
+
+      全ファイル = Folder.Files(フォルダパス),
+
+      CSVのみ = Table.SelectRows(
+                      全ファイル,
+                      each Text.Lower([Extension]) = ".csv"
+                ),
+
+      CSV読込 = (ファイルパス as text) =>
+          let
+              バイナリ = File.Contents(ファイルパス),
+              テーブル = try Csv.Document(バイナリ, [Encoding = 65001])
+                         otherwise Csv.Document(バイナリ, [Encoding = 932]),
+              ヘッダー昇格 = Table.PromoteHeaders(テーブル, [PromoteAllScalars = true])
+          in
+              ヘッダー昇格,
+
+      CSV数 = Table.RowCount(CSVのみ),
+
+      結果 =
+          if CSV数 = 0 then
+              error "CSVファイルが見つかりません。"
+          else if CSV数 = 1 then
+              CSV読込(CSVのみ{0}[Folder Path] & CSVのみ{0}[Name])
+          else
+              Table.Combine(
+                  List.Transform(
+                      List.Numbers(0, CSV数),
+                      each CSV読込(CSVのみ{_}[Folder Path] & CSVのみ{_}[Name])
+                  )
+              )
+  in
+      結果
