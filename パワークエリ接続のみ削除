@@ -1,0 +1,26 @@
+Sub PQ接続削除_最安定()
+
+    Dim i As Long
+    Dim nm As String
+
+    For i = ThisWorkbook.Connections.Count To 1 Step -1
+        
+        On Error Resume Next
+        nm = ThisWorkbook.Connections(i).Name
+        
+        If Err.Number <> 0 Then
+            Err.Clear
+            On Error GoTo 0
+            GoTo 次へ
+        End If
+        
+        If InStr(nm, "Query") > 0 Then
+            ThisWorkbook.Connections(i).Delete
+        End If
+        
+        On Error GoTo 0
+        
+次へ:
+    Next i
+
+End Sub
