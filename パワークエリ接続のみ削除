@@ -1,26 +1,17 @@
-Sub PQ接続削除_最安定()
-
-    Dim i As Long
-    Dim nm As String
+Sub DeleteConnectionsOnly()
+    Dim conn As WorkbookConnection
+    Dim i As Integer
 
     For i = ThisWorkbook.Connections.Count To 1 Step -1
-        
-        On Error Resume Next
-        nm = ThisWorkbook.Connections(i).Name
-        
-        If Err.Number <> 0 Then
-            Err.Clear
+        Set conn = ThisWorkbook.Connections(i)
+
+        ' 「接続」で始まる名前のみ削除
+        If Left(conn.Name, 2) = "接続" Then
+            On Error Resume Next
+            conn.Delete
             On Error GoTo 0
-            GoTo 次へ
         End If
-        
-        If InStr(nm, "Query") > 0 Then
-            ThisWorkbook.Connections(i).Delete
-        End If
-        
-        On Error GoTo 0
-        
-次へ:
     Next i
 
+    MsgBox "完了しました。", vbInformation
 End Sub
