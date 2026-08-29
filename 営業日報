@@ -1,0 +1,3154 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+
+<title>営業日報</title>
+
+<style>
+:root{
+  --ink:#1c2321;
+  --ink-soft:#4a5551;
+  --paper:#f1f0ec;
+  --paper-raised:#ffffff;
+  --line:rgba(28,35,33,0.14);
+  --amber:#e39a2d;
+  --amber-deep:#b8781c;
+  --steel:#2c4a5e;
+  --danger:#b33f30;
+  --ok:#3d6b4c;
+  --radius:14px;
+}
+
+*{
+  box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
+}
+
+html,body{
+  height:100%;
+}
+
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "Hiragino Sans",
+    "Hiragino Kaku Gothic ProN",
+    system-ui,
+    sans-serif;
+  display:flex;
+  flex-direction:column;
+  min-height:100vh;
+  padding-top:env(safe-area-inset-top);
+  padding-bottom:env(safe-area-inset-bottom);
+}
+
+header{
+  padding:18px 20px 14px;
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  border-bottom:1px solid var(--line);
+}
+
+header h1{
+  font-size:19px;
+  margin:0;
+  font-weight:800;
+}
+
+#statusBadge{
+  font-size:12px;
+  font-weight:700;
+  padding:5px 10px;
+  border-radius:999px;
+  background:var(--paper-raised);
+  border:1px solid var(--line);
+  color:var(--ink-soft);
+}
+
+#statusBadge.active{
+  background:var(--amber);
+  color:#241a06;
+  border-color:var(--amber-deep);
+}
+
+main{
+  flex:1;
+  padding:18px 20px 110px;
+  overflow-y:auto;
+}
+
+.view{
+  display:none;
+}
+
+.view.show{
+  display:block;
+  animation:fadeUp .18s ease;
+}
+
+@keyframes fadeUp{
+  from{
+    opacity:0;
+    transform:translateY(6px);
+  }
+  to{
+    opacity:1;
+    transform:none;
+  }
+}
+
+.ticket{
+  background:var(--paper-raised);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  margin-bottom:18px;
+  position:relative;
+  box-shadow:0 1px 2px rgba(0,0,0,.04);
+}
+
+.ticket::before{
+  content:"";
+  position:absolute;
+  left:0;
+  right:0;
+  top:0;
+  height:4px;
+  background:repeating-linear-gradient(
+    90deg,
+    var(--amber) 0 10px,
+    transparent 10px 18px
+  );
+  border-radius:var(--radius) var(--radius) 0 0;
+}
+
+.ticket .label{
+  font-size:11px;
+  color:var(--ink-soft);
+  margin-bottom:2px;
+  letter-spacing:.05em;
+}
+
+.ticket .value{
+  font-family:
+    ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    monospace;
+  font-size:15px;
+  margin-bottom:10px;
+  word-break:break-word;
+}
+
+.empty-note{
+  color:var(--ink-soft);
+  font-size:14px;
+  line-height:1.7;
+  padding:24px 4px;
+  text-align:center;
+}
+
+h2.section-title{
+  font-size:15px;
+  font-weight:800;
+  margin:0 0 14px;
+  color:var(--steel);
+}
+
+label{
+  display:block;
+  font-size:12px;
+  font-weight:700;
+  color:var(--ink-soft);
+  margin:16px 0 6px;
+}
+
+label:first-of-type{
+  margin-top:0;
+}
+
+input[type=text],
+input[type=number],
+input[type=date],
+input[type=time],
+textarea{
+  width:100%;
+  font-size:16px;
+  padding:12px 13px;
+  border-radius:10px;
+  border:1px solid var(--line);
+  background:var(--paper-raised);
+  color:var(--ink);
+  font-family:inherit;
+}
+
+textarea{
+  min-height:120px;
+  resize:vertical;
+  line-height:1.5;
+}
+
+input:focus,
+textarea:focus{
+  outline:2px solid var(--steel);
+  outline-offset:1px;
+}
+
+.btn{
+  display:block;
+  width:100%;
+  text-align:center;
+  padding:14px 16px;
+  border-radius:10px;
+  border:none;
+  font-size:15px;
+  font-weight:800;
+  margin-top:20px;
+  cursor:pointer;
+}
+
+.btn-primary{
+  background:var(--steel);
+  color:#fff;
+}
+
+.btn-amber{
+  background:var(--amber);
+  color:#241a06;
+}
+
+.btn-ghost{
+  background:transparent;
+  color:var(--ink-soft);
+  border:1px solid var(--line);
+  margin-top:10px;
+}
+
+.btn-danger{
+  background:transparent;
+  color:var(--danger);
+  border:1px solid var(--danger);
+  margin-top:10px;
+}
+
+.btn-small{
+  width:auto;
+  display:inline-block;
+  padding:9px 12px;
+  font-size:12px;
+  margin-top:8px;
+}
+
+.log-entry{
+  background:var(--paper-raised);
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:14px;
+  margin-bottom:12px;
+}
+
+.log-entry-title{
+  font-weight:800;
+  font-size:15px;
+  margin-bottom:8px;
+}
+
+.log-entry-row{
+  font-size:13px;
+  line-height:1.6;
+  color:var(--ink-soft);
+}
+
+.log-entry-row strong{
+  color:var(--ink);
+}
+
+.location{
+  font-size:11px;
+  color:var(--ink-soft);
+  margin-top:8px;
+  word-break:break-all;
+}
+
+pre#logDump{
+  background:var(--ink);
+  color:#e8e6df;
+  font-family:
+    ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    monospace;
+  font-size:12px;
+  padding:14px;
+  border-radius:10px;
+  white-space:pre-wrap;
+  word-break:break-all;
+  max-height:40vh;
+  overflow-y:auto;
+}
+
+nav#tabbar{
+  position:fixed;
+  left:0;
+  right:0;
+  bottom:0;
+  display:flex;
+  gap:7px;
+  padding:10px 10px calc(10px + env(safe-area-inset-bottom));
+  background:var(--paper);
+  border-top:1px solid var(--line);
+  z-index:20;
+}
+
+nav#tabbar button{
+  flex:1;
+  padding:12px 4px;
+  border-radius:10px;
+  border:1px solid var(--line);
+  background:var(--paper-raised);
+  font-size:12px;
+  font-weight:800;
+  color:var(--ink);
+}
+
+nav#tabbar button.primary{
+  background:var(--steel);
+  color:#fff;
+  border-color:var(--steel);
+}
+
+nav#tabbar button.warn{
+  background:var(--amber);
+  color:#241a06;
+  border-color:var(--amber-deep);
+}
+
+.overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(28,35,33,.5);
+  display:none;
+  align-items:flex-end;
+  justify-content:center;
+  z-index:50;
+}
+
+.overlay.show{
+  display:flex;
+}
+
+.sheet{
+  background:var(--paper-raised);
+  width:100%;
+  max-width:480px;
+  border-radius:16px 16px 0 0;
+  padding:22px 20px calc(22px + env(safe-area-inset-bottom));
+  max-height:90vh;
+  overflow-y:auto;
+}
+
+.sheet p{
+  font-size:14px;
+  line-height:1.7;
+  color:var(--ink-soft);
+  margin:4px 0 0;
+}
+
+.sheet .value{
+  font-family:
+    ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    monospace;
+  font-weight:700;
+  color:var(--ink);
+}
+
+.section-separator{
+  border:0;
+  border-top:1px solid var(--line);
+  margin:22px 0;
+}
+
+.info-box{
+  background:rgba(44,74,94,.07);
+  border-radius:10px;
+  padding:12px;
+  margin-bottom:14px;
+  font-size:12px;
+  line-height:1.6;
+}
+
+.success-box{
+  background:rgba(61,107,76,.10);
+  border-radius:10px;
+  padding:12px;
+  margin-bottom:14px;
+  font-size:12px;
+}
+
+.vehicle-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+}
+
+.vehicle-grid .btn{
+  margin-top:4px;
+}
+
+@media(max-width:380px){
+  nav#tabbar button{
+    font-size:11px;
+    padding-left:2px;
+    padding-right:2px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>営業日報</h1>
+  <span id="statusBadge">待機中</span>
+</header>
+
+<main>
+
+<!-- =========================
+     HOME
+========================= -->
+<section id="view-home" class="view show">
+
+  <div id="homeTicket"></div>
+
+</section>
+
+
+<!-- =========================
+     START
+========================= -->
+<section id="view-start" class="view">
+
+  <h2 class="section-title">訪問開始</h2>
+
+  <label for="destInput">訪問先名称</label>
+  <input
+    type="text"
+    id="destInput"
+    placeholder="例：株式会社ABC"
+    autocomplete="off"
+  >
+
+  <label for="contactInput">打合せ者名</label>
+  <input
+    type="text"
+    id="contactInput"
+    placeholder="例：山田太郎"
+    autocomplete="off"
+  >
+
+  <div class="info-box">
+    「開始を記録」を押すと、現在日時と位置情報を取得します。
+    位置情報を取得できない場合でも訪問記録は保存されます。
+  </div>
+
+  <button
+    class="btn btn-primary"
+    onclick="submitStart()"
+  >
+    開始を記録
+  </button>
+
+  <button
+    class="btn btn-ghost"
+    onclick="goHome()"
+  >
+    キャンセル
+  </button>
+
+</section>
+
+
+<!-- =========================
+     END
+========================= -->
+<section id="view-end" class="view">
+
+  <h2 class="section-title">訪問終了</h2>
+
+  <div id="endTicket"></div>
+
+  <label for="contentInput">打合せ内容</label>
+
+  <textarea
+    id="contentInput"
+    placeholder="例：使用状況を確認。来月の使用量を確認。"
+  ></textarea>
+
+  <div class="info-box">
+    「終了を記録」を押すと、終了時刻と現在位置を取得します。
+  </div>
+
+  <button
+    class="btn btn-amber"
+    onclick="submitEnd()"
+  >
+    終了を記録
+  </button>
+
+  <button
+    class="btn btn-ghost"
+    onclick="goHome()"
+  >
+    キャンセル
+  </button>
+
+</section>
+
+
+<!-- =========================
+     LOG
+========================= -->
+<section id="view-log" class="view">
+
+  <h2 class="section-title">営業日報ログ</h2>
+
+  <div id="logList"></div>
+
+  <div
+    id="logEmpty"
+    class="empty-note"
+  >
+    まだ記録がありません。
+  </div>
+
+  <hr class="section-separator">
+
+  <h2 class="section-title">CSVデータ</h2>
+
+  <pre id="logDump">（まだ記録がありません）</pre>
+
+  <button
+    class="btn btn-primary"
+    onclick="sendMail()"
+  >
+    メールで送信
+  </button>
+
+  <button
+    class="btn btn-ghost"
+    onclick="copyLog()"
+  >
+    CSVをコピー
+  </button>
+
+  <button
+    class="btn btn-danger"
+    onclick="clearLogConfirm()"
+  >
+    ログを消去
+  </button>
+
+</section>
+
+
+<!-- =========================
+     VEHICLE
+========================= -->
+<section id="view-vehicle" class="view">
+
+  <h2 class="section-title">車両情報</h2>
+
+  <div id="vehicleView"></div>
+
+  <button
+    class="btn btn-amber"
+    onclick="openVehicleEdit()"
+  >
+    車両情報を編集
+  </button>
+
+</section>
+
+
+<!-- =========================
+     VEHICLE EDIT
+========================= -->
+<section id="view-vehicle-edit" class="view">
+
+  <h2 class="section-title">車両情報の編集</h2>
+
+  <label for="vehicleStart">出発時走行距離 (km)</label>
+  <input
+    type="number"
+    id="vehicleStart"
+    inputmode="numeric"
+  >
+
+  <label for="vehicleEnd">帰社時走行距離 (km)</label>
+  <input
+    type="number"
+    id="vehicleEnd"
+    inputmode="numeric"
+  >
+
+  <label for="fuelQuantity">給油数量 (L)</label>
+  <input
+    type="number"
+    id="fuelQuantity"
+    inputmode="decimal"
+    step="0.1"
+  >
+
+  <label for="fuelTime">給油時刻</label>
+  <input
+    type="time"
+    id="fuelTime"
+  >
+
+  <div class="info-box">
+    給油位置を再取得する場合は下のボタンを使用してください。
+  </div>
+
+  <button
+    class="btn btn-ghost"
+    onclick="getFuelLocation()"
+  >
+    給油位置を取得
+  </button>
+
+  <div id="fuelLocationStatus"></div>
+
+  <button
+    class="btn btn-primary"
+    onclick="saveVehicleEdit()"
+  >
+    車両情報を保存
+  </button>
+
+  <button
+    class="btn btn-ghost"
+    onclick="openVehicle()"
+  >
+    キャンセル
+  </button>
+
+</section>
+
+
+<!-- =========================
+     REPORT EDIT
+========================= -->
+<section id="view-edit" class="view">
+
+  <h2 class="section-title">営業日報の編集</h2>
+
+  <input
+    type="hidden"
+    id="editIndex"
+  >
+
+  <label for="editDate">日付</label>
+  <input
+    type="text"
+    id="editDate"
+  >
+
+  <label for="editStart">開始時間</label>
+  <input
+    type="text"
+    id="editStart"
+  >
+
+  <label for="editEnd">終了時間</label>
+  <input
+    type="text"
+    id="editEnd"
+  >
+
+  <label for="editDest">訪問先名称</label>
+  <input
+    type="text"
+    id="editDest"
+  >
+
+  <label for="editContact">打合せ者名</label>
+  <input
+    type="text"
+    id="editContact"
+  >
+
+  <label for="editContent">打合せ内容</label>
+  <textarea
+    id="editContent"
+  ></textarea>
+
+  <button
+    class="btn btn-primary"
+    onclick="saveLogEntryEdit()"
+  >
+    保存
+  </button>
+
+  <button
+    class="btn btn-danger"
+    onclick="deleteLogEntry()"
+  >
+    この記録を削除
+  </button>
+
+  <button
+    class="btn btn-ghost"
+    onclick="openLog()"
+  >
+    キャンセル
+  </button>
+
+</section>
+
+</main>
+
+
+<!-- =========================
+     TAB BAR
+========================= -->
+<nav id="tabbar">
+
+  <button onclick="goHome()">
+    ホーム
+  </button>
+
+  <button
+    class="warn"
+    onclick="openStart()"
+  >
+    訪問開始
+  </button>
+
+  <button
+    class="primary"
+    onclick="openEnd()"
+  >
+    訪問終了
+  </button>
+
+  <button onclick="openLog()">
+    ログ
+  </button>
+
+</nav>
+
+
+<!-- =========================
+     START MILEAGE
+========================= -->
+<div
+  class="overlay"
+  id="mileageStartOverlay"
+>
+
+  <div class="sheet">
+
+    <h2 class="section-title">
+      本日の出発時走行距離
+    </h2>
+
+    <p>
+      本日最初の訪問を始める前に、
+      車の走行距離(km)を入力してください。
+    </p>
+
+    <label for="mileageStartInput">
+      走行距離 (km)
+    </label>
+
+    <input
+      type="number"
+      id="mileageStartInput"
+      inputmode="numeric"
+      placeholder="例：58230"
+    >
+
+    <button
+      class="btn btn-amber"
+      onclick="submitMileageStart()"
+    >
+      記録して次へ
+    </button>
+
+    <button
+      class="btn btn-ghost"
+      onclick="closeMileageStart()"
+    >
+      キャンセル
+    </button>
+
+  </div>
+</div>
+
+
+<!-- =========================
+     END MILEAGE
+========================= -->
+<div
+  class="overlay"
+  id="mileageEndOverlay"
+>
+
+  <div class="sheet">
+
+    <h2 class="section-title">
+      帰社時走行距離
+    </h2>
+
+    <p>
+      本日の業務終了時の走行距離(km)を入力してください。
+    </p>
+
+    <label for="mileageEndInput">
+      走行距離 (km)
+    </label>
+
+    <input
+      type="number"
+      id="mileageEndInput"
+      inputmode="numeric"
+      placeholder="例：58390"
+    >
+
+    <button
+      class="btn btn-primary"
+      onclick="submitMileageEnd()"
+    >
+      記録する
+    </button>
+
+    <button
+      class="btn btn-ghost"
+      onclick="closeMileageEnd()"
+    >
+      キャンセル
+    </button>
+
+  </div>
+</div>
+
+
+<!-- =========================
+     WARNING
+========================= -->
+<div
+  class="overlay"
+  id="warnOverlay"
+>
+
+  <div class="sheet">
+
+    <h2 class="section-title">
+      前回の訪問が終了していません
+    </h2>
+
+    <p>
+      訪問先：
+      <span
+        class="value"
+        id="warnDest"
+      ></span>
+    </p>
+
+    <p>
+      開始：
+      <span
+        class="value"
+        id="warnTime"
+      ></span>
+    </p>
+
+    <p style="margin-top:12px;">
+      新しい訪問を開始しますか？
+      未終了データは上書きされます。
+    </p>
+
+    <button
+      class="btn btn-amber"
+      onclick="proceedNewVisit()"
+    >
+      新しい訪問を開始
+    </button>
+
+    <button
+      class="btn btn-ghost"
+      onclick="closeWarn()"
+    >
+      キャンセル
+    </button>
+
+  </div>
+</div>
+
+
+<script>
+
+/* =========================================================
+   保存キー
+========================================================= */
+
+const LOG_KEY = "eigyo_log_entries";
+const WORK_KEY = "eigyo_working";
+const VEHICLE_KEY = "eigyo_vehicle";
+
+
+/* =========================================================
+   状態
+========================================================= */
+
+let mileageStartContinue = false;
+let editingWorkingMode = false;
+let currentLocation = null;
+
+
+/* =========================================================
+   基本関数
+========================================================= */
+
+function pad(n){
+  return String(n).padStart(2,"0");
+}
+
+
+function nowParts(){
+
+  const d = new Date();
+
+  return {
+    date:
+      d.getFullYear() +
+      "/" +
+      pad(d.getMonth()+1) +
+      "/" +
+      pad(d.getDate()),
+
+    time:
+      pad(d.getHours()) +
+      ":" +
+      pad(d.getMinutes())
+  };
+}
+
+
+function todayStr(){
+  return nowParts().date;
+}
+
+
+function sanitize(s){
+
+  return String(s || "")
+    .replace(/,/g,"，")
+    .replace(/\r/g,"")
+    .replace(/\n/g," ")
+    .replace(/\t/g," ")
+    .trim();
+
+}
+
+
+/* =========================================================
+   営業日報保存
+========================================================= */
+
+function loadLog(){
+
+  try{
+
+    const raw =
+      localStorage.getItem(LOG_KEY);
+
+    if(!raw){
+      return [];
+    }
+
+    const data = JSON.parse(raw);
+
+    return Array.isArray(data)
+      ? data
+      : [];
+
+  }catch(e){
+
+    console.error(e);
+
+    return [];
+
+  }
+
+}
+
+
+function saveLog(arr){
+
+  localStorage.setItem(
+    LOG_KEY,
+    JSON.stringify(arr)
+  );
+
+}
+
+
+/* =========================================================
+   作業中訪問
+========================================================= */
+
+function loadWorking(){
+
+  try{
+
+    const raw =
+      localStorage.getItem(WORK_KEY);
+
+    return raw
+      ? JSON.parse(raw)
+      : null;
+
+  }catch(e){
+
+    return null;
+
+  }
+
+}
+
+
+function saveWorking(obj){
+
+  localStorage.setItem(
+    WORK_KEY,
+    JSON.stringify(obj)
+  );
+
+}
+
+
+function clearWorking(){
+
+  localStorage.removeItem(
+    WORK_KEY
+  );
+
+}
+
+
+/* =========================================================
+   車両情報
+========================================================= */
+
+function loadVehicle(){
+
+  try{
+
+    const raw =
+      localStorage.getItem(VEHICLE_KEY);
+
+    return raw
+      ? JSON.parse(raw)
+      : null;
+
+  }catch(e){
+
+    return null;
+
+  }
+
+}
+
+
+function saveVehicle(obj){
+
+  localStorage.setItem(
+    VEHICLE_KEY,
+    JSON.stringify(obj)
+  );
+
+}
+
+
+/* =========================================================
+   位置情報
+========================================================= */
+
+function getLocation(callback){
+
+  if(
+    !navigator.geolocation
+  ){
+
+    callback(null);
+
+    return;
+  }
+
+
+  navigator.geolocation.getCurrentPosition(
+
+    function(position){
+
+      const loc = {
+
+        latitude:
+          position.coords.latitude,
+
+        longitude:
+          position.coords.longitude,
+
+        accuracy:
+          position.coords.accuracy,
+
+        time:
+          new Date().toISOString()
+
+      };
+
+      callback(loc);
+
+    },
+
+    function(error){
+
+      console.log(
+        "位置情報取得失敗:",
+        error
+      );
+
+      callback(null);
+
+    },
+
+    {
+      enableHighAccuracy:true,
+      timeout:10000,
+      maximumAge:0
+    }
+
+  );
+
+}
+
+
+/* =========================================================
+   位置情報表示
+========================================================= */
+
+function locationText(loc){
+
+  if(!loc){
+
+    return "取得できませんでした";
+
+  }
+
+  return (
+    "緯度 " +
+    loc.latitude.toFixed(6) +
+    " / 経度 " +
+    loc.longitude.toFixed(6) +
+    " / 精度 " +
+    Math.round(loc.accuracy) +
+    "m"
+  );
+
+}
+
+
+/* =========================================================
+   画面切替
+========================================================= */
+
+function setView(id){
+
+  document
+    .querySelectorAll(".view")
+    .forEach(function(v){
+
+      v.classList.remove("show");
+
+    });
+
+
+  const el =
+    document.getElementById(id);
+
+  if(el){
+
+    el.classList.add("show");
+
+  }
+
+}
+
+
+/* =========================================================
+   ステータス
+========================================================= */
+
+function refreshBadge(){
+
+  const w =
+    loadWorking();
+
+  const badge =
+    document.getElementById(
+      "statusBadge"
+    );
+
+
+  if(w){
+
+    badge.textContent =
+      "訪問中";
+
+    badge.classList.add(
+      "active"
+    );
+
+  }else{
+
+    badge.textContent =
+      "待機中";
+
+    badge.classList.remove(
+      "active"
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   ホーム表示
+========================================================= */
+
+function renderHome(){
+
+  const el =
+    document.getElementById(
+      "homeTicket"
+    );
+
+  let html = "";
+
+
+  const v =
+    loadVehicle();
+
+
+  if(v && v.date === todayStr()){
+
+    html += `
+      <div class="ticket">
+
+        <div class="label">
+          車両情報
+        </div>
+
+        <div class="label">
+          出発時走行距離
+        </div>
+
+        <div class="value">
+          ${
+            v.startMileage != null
+            ? v.startMileage + " km"
+            : "未入力"
+          }
+        </div>
+
+        <div class="label">
+          給油数量
+        </div>
+
+        <div class="value">
+          ${
+            v.fuelQuantity != null
+            ? v.fuelQuantity + " L"
+            : "未入力"
+          }
+        </div>
+
+        <div class="label">
+          帰社時走行距離
+        </div>
+
+        <div class="value">
+          ${
+            v.endMileage != null
+            ? v.endMileage + " km"
+            : "未入力"
+          }
+        </div>
+
+        <button
+          class="btn btn-ghost"
+          style="margin-top:4px;"
+          onclick="openVehicle()"
+        >
+          車両情報を確認・編集
+        </button>
+
+      </div>
+    `;
+
+  }else{
+
+    html += `
+      <div class="ticket">
+
+        <div class="label">
+          車両情報
+        </div>
+
+        <div class="empty-note">
+          本日の車両情報はまだありません。
+        </div>
+
+        <button
+          class="btn btn-amber"
+          style="margin-top:4px;"
+          onclick="openVehicleEdit()"
+        >
+          車両情報を入力
+        </button>
+
+      </div>
+    `;
+
+  }
+
+
+  const w =
+    loadWorking();
+
+
+  if(!w){
+
+    html += `
+      <div class="empty-note">
+        現在、進行中の訪問はありません。<br>
+        「訪問開始」から記録してください。
+      </div>
+    `;
+
+  }else{
+
+    html += `
+      <div class="ticket">
+
+        <div class="label">
+          訪問先
+        </div>
+
+        <div class="value">
+          ${escapeHtml(w.dest)}
+        </div>
+
+        <div class="label">
+          打合せ者
+        </div>
+
+        <div class="value">
+          ${escapeHtml(w.contact)}
+        </div>
+
+        <div class="label">
+          開始
+        </div>
+
+        <div class="value">
+          ${w.date} ${w.time}
+        </div>
+
+        <div class="location">
+          開始位置：
+          ${locationText(w.startLocation)}
+        </div>
+
+        <button
+          class="btn btn-ghost"
+          style="margin-top:4px;"
+          onclick="editWorking()"
+        >
+          この訪問を編集
+        </button>
+
+      </div>
+    `;
+
+  }
+
+
+  el.innerHTML =
+    html;
+
+}
+
+
+/* =========================================================
+   HTMLエスケープ
+========================================================= */
+
+function escapeHtml(value){
+
+  return String(value || "")
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
+
+}
+
+
+/* =========================================================
+   ホーム
+========================================================= */
+
+function goHome(){
+
+  closeWarn();
+
+  refreshBadge();
+
+  renderHome();
+
+  setView(
+    "view-home"
+  );
+
+}
+
+
+/* =========================================================
+   訪問開始
+========================================================= */
+
+function openStart(){
+
+  editingWorkingMode = false;
+
+
+  const vehicle =
+    loadVehicle();
+
+
+  if(
+    !vehicle ||
+    vehicle.date !== todayStr() ||
+    vehicle.startMileage == null
+  ){
+
+    mileageStartContinue = true;
+
+    openMileageStart();
+
+    return;
+
+  }
+
+
+  const w =
+    loadWorking();
+
+
+  if(w){
+
+    document.getElementById(
+      "warnDest"
+    ).textContent =
+      w.dest;
+
+
+    document.getElementById(
+      "warnTime"
+    ).textContent =
+      w.date + " " + w.time;
+
+
+    document
+      .getElementById(
+        "warnOverlay"
+      )
+      .classList.add("show");
+
+    return;
+
+  }
+
+
+  document.getElementById(
+    "destInput"
+  ).value = "";
+
+
+  document.getElementById(
+    "contactInput"
+  ).value = "";
+
+
+  setView(
+    "view-start"
+  );
+
+}
+
+
+function proceedNewVisit(){
+
+  closeWarn();
+
+  document.getElementById(
+    "destInput"
+  ).value = "";
+
+
+  document.getElementById(
+    "contactInput"
+  ).value = "";
+
+
+  setView(
+    "view-start"
+  );
+
+}
+
+
+function closeWarn(){
+
+  document
+    .getElementById(
+      "warnOverlay"
+    )
+    .classList.remove("show");
+
+}
+
+
+/* =========================================================
+   訪問開始記録
+========================================================= */
+
+function submitStart(){
+
+  const dest =
+    sanitize(
+      document.getElementById(
+        "destInput"
+      ).value
+    );
+
+
+  const contact =
+    sanitize(
+      document.getElementById(
+        "contactInput"
+      ).value
+    );
+
+
+  if(!dest){
+
+    alert(
+      "訪問先名称を入力してください。"
+    );
+
+    return;
+
+  }
+
+
+  const parts =
+    nowParts();
+
+
+  const old =
+    loadWorking();
+
+
+  const working = {
+
+    date:parts.date,
+
+    time:parts.time,
+
+    dest:dest,
+
+    contact:contact,
+
+    startLocation:null,
+
+    endLocation:null
+
+  };
+
+
+  saveWorking(
+    working
+  );
+
+
+  /*
+   * 位置情報取得は失敗しても
+   * 訪問記録そのものは保存済み
+   */
+
+  getLocation(
+    function(loc){
+
+      const current =
+        loadWorking();
+
+      if(!current){
+        return;
+      }
+
+      current.startLocation =
+        loc;
+
+      saveWorking(
+        current
+      );
+
+      renderHome();
+
+    }
+  );
+
+
+  goHome();
+
+}
+
+
+/* =========================================================
+   作業中訪問編集
+========================================================= */
+
+function editWorking(){
+
+  const w =
+    loadWorking();
+
+
+  if(!w){
+    return;
+  }
+
+
+  editingWorkingMode = true;
+
+
+  document.getElementById(
+    "destInput"
+  ).value =
+    w.dest || "";
+
+
+  document.getElementById(
+    "contactInput"
+  ).value =
+    w.contact || "";
+
+
+  setView(
+    "view-start"
+  );
+
+}
+
+
+/* =========================================================
+   訪問終了
+========================================================= */
+
+function openEnd(){
+
+  const w =
+    loadWorking();
+
+
+  if(!w){
+
+    alert(
+      "進行中の訪問がありません。"
+    );
+
+    return;
+
+  }
+
+
+  document.getElementById(
+    "endTicket"
+  ).innerHTML = `
+
+    <div class="ticket">
+
+      <div class="label">
+        訪問先
+      </div>
+
+      <div class="value">
+        ${escapeHtml(w.dest)}
+      </div>
+
+      <div class="label">
+        打合せ者
+      </div>
+
+      <div class="value">
+        ${escapeHtml(w.contact)}
+      </div>
+
+      <div class="label">
+        開始
+      </div>
+
+      <div class="value">
+        ${w.date} ${w.time}
+      </div>
+
+      <div class="location">
+        開始位置：
+        ${locationText(w.startLocation)}
+      </div>
+
+    </div>
+
+  `;
+
+
+  document.getElementById(
+    "contentInput"
+  ).value = "";
+
+
+  setView(
+    "view-end"
+  );
+
+}
+
+
+/* =========================================================
+   訪問終了記録
+========================================================= */
+
+function submitEnd(){
+
+  const w =
+    loadWorking();
+
+
+  if(!w){
+
+    goHome();
+
+    return;
+
+  }
+
+
+  const content =
+    sanitize(
+      document.getElementById(
+        "contentInput"
+      ).value
+    );
+
+
+  const parts =
+    nowParts();
+
+
+  /*
+   * まず位置情報を取得
+   */
+
+  getLocation(
+    function(loc){
+
+      const entry = {
+
+        date:w.date,
+
+        startTime:w.time,
+
+        endTime:parts.time,
+
+        dest:w.dest,
+
+        contact:w.contact,
+
+        content:content,
+
+        startLocation:
+          w.startLocation || null,
+
+        endLocation:
+          loc || null
+
+      };
+
+
+      const logs =
+        loadLog();
+
+
+      logs.push(
+        entry
+      );
+
+
+      saveLog(
+        logs
+      );
+
+
+      clearWorking();
+
+
+      refreshBadge();
+
+      renderHome();
+
+
+      alert(
+        "営業日報を記録しました。"
+      );
+
+
+      openLog();
+
+    }
+  );
+
+}
+
+
+/* =========================================================
+   日報一覧表示
+========================================================= */
+
+function renderLogList(){
+
+  const logs =
+    loadLog();
+
+
+  const list =
+    document.getElementById(
+      "logList"
+    );
+
+
+  const empty =
+    document.getElementById(
+      "logEmpty"
+    );
+
+
+  if(!logs.length){
+
+    list.innerHTML = "";
+
+    empty.style.display =
+      "block";
+
+    return;
+
+  }
+
+
+  empty.style.display =
+    "none";
+
+
+  let html = "";
+
+
+  logs.forEach(
+    function(item,index){
+
+      html += `
+
+        <div class="log-entry">
+
+          <div class="log-entry-title">
+            ${escapeHtml(item.dest)}
+          </div>
+
+          <div class="log-entry-row">
+            <strong>日付：</strong>
+            ${escapeHtml(item.date)}
+          </div>
+
+          <div class="log-entry-row">
+            <strong>時間：</strong>
+            ${escapeHtml(item.startTime)}
+            ～
+            ${escapeHtml(item.endTime)}
+          </div>
+
+          <div class="log-entry-row">
+            <strong>打合せ者：</strong>
+            ${escapeHtml(item.contact)}
+          </div>
+
+          <div class="log-entry-row">
+            <strong>内容：</strong>
+            ${escapeHtml(item.content)}
+          </div>
+
+          <div class="location">
+            開始位置：
+            ${locationText(item.startLocation)}
+          </div>
+
+          <div class="location">
+            終了位置：
+            ${locationText(item.endLocation)}
+          </div>
+
+          <button
+            class="btn btn-ghost btn-small"
+            onclick="editLogEntry(${index})"
+          >
+            この記録を編集
+          </button>
+
+        </div>
+
+      `;
+
+    }
+  );
+
+
+  list.innerHTML =
+    html;
+
+}
+
+
+/* =========================================================
+   ログ画面
+========================================================= */
+
+function openLog(){
+
+  renderLogList();
+
+  updateCsvDump();
+
+  setView(
+    "view-log"
+  );
+
+}
+
+
+/* =========================================================
+   営業日報編集
+========================================================= */
+
+function editLogEntry(index){
+
+  const logs =
+    loadLog();
+
+
+  const item =
+    logs[index];
+
+
+  if(!item){
+    return;
+  }
+
+
+  document.getElementById(
+    "editIndex"
+  ).value =
+    index;
+
+
+  document.getElementById(
+    "editDate"
+  ).value =
+    item.date || "";
+
+
+  document.getElementById(
+    "editStart"
+  ).value =
+    item.startTime || "";
+
+
+  document.getElementById(
+    "editEnd"
+  ).value =
+    item.endTime || "";
+
+
+  document.getElementById(
+    "editDest"
+  ).value =
+    item.dest || "";
+
+
+  document.getElementById(
+    "editContact"
+  ).value =
+    item.contact || "";
+
+
+  document.getElementById(
+    "editContent"
+  ).value =
+    item.content || "";
+
+
+  setView(
+    "view-edit"
+  );
+
+}
+
+
+/* =========================================================
+   営業日報編集保存
+========================================================= */
+
+function saveLogEntryEdit(){
+
+  const index =
+    Number(
+      document.getElementById(
+        "editIndex"
+      ).value
+    );
+
+
+  const logs =
+    loadLog();
+
+
+  if(!logs[index]){
+
+    alert(
+      "編集対象が見つかりません。"
+    );
+
+    return;
+
+  }
+
+
+  logs[index].date =
+    sanitize(
+      document.getElementById(
+        "editDate"
+      ).value
+    );
+
+
+  logs[index].startTime =
+    sanitize(
+      document.getElementById(
+        "editStart"
+      ).value
+    );
+
+
+  logs[index].endTime =
+    sanitize(
+      document.getElementById(
+        "editEnd"
+      ).value
+    );
+
+
+  logs[index].dest =
+    sanitize(
+      document.getElementById(
+        "editDest"
+      ).value
+    );
+
+
+  logs[index].contact =
+    sanitize(
+      document.getElementById(
+        "editContact"
+      ).value
+    );
+
+
+  logs[index].content =
+    sanitize(
+      document.getElementById(
+        "editContent"
+      ).value
+    );
+
+
+  saveLog(
+    logs
+  );
+
+
+  alert(
+    "営業日報を修正しました。"
+  );
+
+
+  openLog();
+
+}
+
+
+/* =========================================================
+   営業日報削除
+========================================================= */
+
+function deleteLogEntry(){
+
+  const index =
+    Number(
+      document.getElementById(
+        "editIndex"
+      ).value
+    );
+
+
+  const logs =
+    loadLog();
+
+
+  if(!logs[index]){
+    return;
+  }
+
+
+  if(
+    !confirm(
+      "この営業日報を削除しますか？"
+    )
+  ){
+
+    return;
+
+  }
+
+
+  logs.splice(
+    index,
+    1
+  );
+
+
+  saveLog(
+    logs
+  );
+
+
+  openLog();
+
+}
+
+
+/* =========================================================
+   CSV
+========================================================= */
+
+function csvLocation(loc){
+
+  if(!loc){
+    return "";
+  }
+
+
+  return (
+    loc.latitude.toFixed(6) +
+    "," +
+    loc.longitude.toFixed(6)
+  );
+
+}
+
+
+function reportCsv(){
+
+  const logs =
+    loadLog();
+
+
+  let csv =
+    "日付,開始時間,終了時間,訪問先名称,打合せ者名,内容,開始緯度,開始経度,終了緯度,終了経度\n";
+
+
+  logs.forEach(
+    function(item){
+
+      csv +=
+        [
+          sanitize(item.date),
+          sanitize(item.startTime),
+          sanitize(item.endTime),
+          sanitize(item.dest),
+          sanitize(item.contact),
+          sanitize(item.content),
+          item.startLocation
+            ? item.startLocation.latitude.toFixed(6)
+            : "",
+          item.startLocation
+            ? item.startLocation.longitude.toFixed(6)
+            : "",
+          item.endLocation
+            ? item.endLocation.latitude.toFixed(6)
+            : "",
+          item.endLocation
+            ? item.endLocation.longitude.toFixed(6)
+            : ""
+
+        ].join(",") +
+        "\n";
+
+    }
+  );
+
+
+  return csv;
+
+}
+
+
+function vehicleCsv(){
+
+  const v =
+    loadVehicle();
+
+
+  if(
+    !v ||
+    v.date !== todayStr()
+  ){
+
+    return "";
+
+  }
+
+
+  let csv =
+    "\n車両情報\n";
+
+
+  csv +=
+    "日付,出発時走行距離,給油数量,給油時刻,給油緯度,給油経度,帰社時走行距離\n";
+
+
+  csv +=
+    [
+      sanitize(v.date),
+
+      v.startMileage != null
+        ? v.startMileage
+        : "",
+
+      v.fuelQuantity != null
+        ? v.fuelQuantity
+        : "",
+
+      sanitize(v.fuelTime || ""),
+
+      v.fuelLocation
+        ? v.fuelLocation.latitude.toFixed(6)
+        : "",
+
+      v.fuelLocation
+        ? v.fuelLocation.longitude.toFixed(6)
+        : "",
+
+      v.endMileage != null
+        ? v.endMileage
+        : ""
+
+    ].join(",");
+
+
+  return csv;
+
+}
+
+
+function fullReportText(){
+
+  return (
+    reportCsv() +
+    vehicleCsv()
+  );
+
+}
+
+
+function updateCsvDump(){
+
+  const text =
+    fullReportText();
+
+
+  document.getElementById(
+    "logDump"
+  ).textContent =
+    text.trim()
+      ? text
+      : "（まだ記録がありません）";
+
+}
+
+
+/* =========================================================
+   メール
+========================================================= */
+
+function sendMail(){
+
+  const text =
+    fullReportText();
+
+
+  if(!text.trim()){
+
+    alert(
+      "送信するデータがありません。"
+    );
+
+    return;
+
+  }
+
+
+  const subject =
+    encodeURIComponent(
+      "営業日報 " +
+      todayStr()
+    );
+
+
+  const body =
+    encodeURIComponent(
+      text
+    );
+
+
+  window.location.href =
+    "mailto:?subject=" +
+    subject +
+    "&body=" +
+    body;
+
+}
+
+
+/* =========================================================
+   コピー
+========================================================= */
+
+function copyLog(){
+
+  const text =
+    fullReportText();
+
+
+  if(!text.trim()){
+
+    alert(
+      "コピーするデータがありません。"
+    );
+
+    return;
+
+  }
+
+
+  if(
+    navigator.clipboard &&
+    navigator.clipboard.writeText
+  ){
+
+    navigator.clipboard
+      .writeText(text)
+      .then(
+        function(){
+
+          alert(
+            "CSVをコピーしました。"
+          );
+
+        }
+      )
+      .catch(
+        function(){
+
+          fallbackCopy(text);
+
+        }
+      );
+
+  }else{
+
+    fallbackCopy(text);
+
+  }
+
+}
+
+
+function fallbackCopy(text){
+
+  const area =
+    document.createElement(
+      "textarea"
+    );
+
+
+  area.value =
+    text;
+
+
+  document.body.appendChild(
+    area
+  );
+
+
+  area.select();
+
+
+  try{
+
+    document.execCommand(
+      "copy"
+    );
+
+    alert(
+      "CSVをコピーしました。"
+    );
+
+  }catch(e){
+
+    alert(
+      "コピーできませんでした。"
+    );
+
+  }
+
+
+  document.body.removeChild(
+    area
+  );
+
+}
+
+
+/* =========================================================
+   車両画面
+========================================================= */
+
+function openVehicle(){
+
+  renderVehicle();
+
+  setView(
+    "view-vehicle"
+  );
+
+}
+
+
+function renderVehicle(){
+
+  const el =
+    document.getElementById(
+      "vehicleView"
+    );
+
+
+  const v =
+    loadVehicle();
+
+
+  if(
+    !v ||
+    v.date !== todayStr()
+  ){
+
+    el.innerHTML = `
+      <div class="empty-note">
+        本日の車両情報はありません。
+      </div>
+    `;
+
+    return;
+
+  }
+
+
+  el.innerHTML = `
+
+    <div class="ticket">
+
+      <div class="label">
+        日付
+      </div>
+
+      <div class="value">
+        ${escapeHtml(v.date)}
+      </div>
+
+      <div class="label">
+        出発時走行距離
+      </div>
+
+      <div class="value">
+        ${
+          v.startMileage != null
+          ? v.startMileage + " km"
+          : "未入力"
+        }
+      </div>
+
+      <div class="label">
+        給油数量
+      </div>
+
+      <div class="value">
+        ${
+          v.fuelQuantity != null
+          ? v.fuelQuantity + " L"
+          : "未入力"
+        }
+      </div>
+
+      <div class="label">
+        給油時刻
+      </div>
+
+      <div class="value">
+        ${escapeHtml(v.fuelTime || "未入力")}
+      </div>
+
+      <div class="location">
+        給油位置：
+        ${locationText(v.fuelLocation)}
+      </div>
+
+      <div class="label">
+        帰社時走行距離
+      </div>
+
+      <div class="value">
+        ${
+          v.endMileage != null
+          ? v.endMileage + " km"
+          : "未入力"
+        }
+      </div>
+
+    </div>
+
+  `;
+
+}
+
+
+/* =========================================================
+   車両編集画面
+========================================================= */
+
+function openVehicleEdit(){
+
+  const v =
+    loadVehicle();
+
+
+  if(
+    !v ||
+    v.date !== todayStr()
+  ){
+
+    document.getElementById(
+      "vehicleStart"
+    ).value = "";
+
+    document.getElementById(
+      "vehicleEnd"
+    ).value = "";
+
+    document.getElementById(
+      "fuelQuantity"
+    ).value = "";
+
+    document.getElementById(
+      "fuelTime"
+    ).value = "";
+
+  }else{
+
+    document.getElementById(
+      "vehicleStart"
+    ).value =
+      v.startMileage != null
+      ? v.startMileage
+      : "";
+
+
+    document.getElementById(
+      "vehicleEnd"
+    ).value =
+      v.endMileage != null
+      ? v.endMileage
+      : "";
+
+
+    document.getElementById(
+      "fuelQuantity"
+    ).value =
+      v.fuelQuantity != null
+      ? v.fuelQuantity
+      : "";
+
+
+    document.getElementById(
+      "fuelTime"
+    ).value =
+      v.fuelTime || "";
+
+  }
+
+
+  document.getElementById(
+    "fuelLocationStatus"
+  ).innerHTML = "";
+
+
+  setView(
+    "view-vehicle-edit"
+  );
+
+}
+
+
+/* =========================================================
+   給油位置取得
+========================================================= */
+
+function getFuelLocation(){
+
+  const status =
+    document.getElementById(
+      "fuelLocationStatus"
+    );
+
+
+  status.innerHTML =
+    '<div class="info-box">位置情報を取得しています…</div>';
+
+
+  getLocation(
+    function(loc){
+
+      if(!loc){
+
+        currentLocation =
+          null;
+
+        status.innerHTML =
+          '<div class="info-box">位置情報を取得できませんでした。</div>';
+
+        return;
+
+      }
+
+
+      currentLocation =
+        loc;
+
+
+      status.innerHTML =
+        `
+        <div class="success-box">
+          給油位置を取得しました。<br>
+          ${locationText(loc)}
+        </div>
+        `;
+
+    }
+  );
+
+}
+
+
+/* =========================================================
+   車両編集保存
+========================================================= */
+
+function saveVehicleEdit(){
+
+  const start =
+    document.getElementById(
+      "vehicleStart"
+    ).value;
+
+
+  const end =
+    document.getElementById(
+      "vehicleEnd"
+    ).value;
+
+
+  const fuel =
+    document.getElementById(
+      "fuelQuantity"
+    ).value;
+
+
+  const fuelTime =
+    document.getElementById(
+      "fuelTime"
+    ).value;
+
+
+  let v =
+    loadVehicle();
+
+
+  if(
+    !v ||
+    v.date !== todayStr()
+  ){
+
+    v = {
+
+      date:todayStr(),
+
+      startMileage:null,
+
+      endMileage:null,
+
+      fuelQuantity:null,
+
+      fuelTime:"",
+
+      fuelLocation:null
+
+    };
+
+  }
+
+
+  if(start !== ""){
+
+    v.startMileage =
+      Number(start);
+
+  }else{
+
+    v.startMileage =
+      null;
+
+  }
+
+
+  if(end !== ""){
+
+    v.endMileage =
+      Number(end);
+
+  }else{
+
+    v.endMileage =
+      null;
+
+  }
+
+
+  if(fuel !== ""){
+
+    v.fuelQuantity =
+      Number(fuel);
+
+  }else{
+
+    v.fuelQuantity =
+      null;
+
+  }
+
+
+  v.fuelTime =
+    sanitize(fuelTime);
+
+
+  if(currentLocation){
+
+    v.fuelLocation =
+      currentLocation;
+
+  }
+
+
+  saveVehicle(
+    v
+  );
+
+
+  currentLocation =
+    null;
+
+
+  alert(
+    "車両情報を保存しました。"
+  );
+
+
+  renderHome();
+
+
+  openVehicle();
+
+}
+
+
+/* =========================================================
+   出発時走行距離入力
+========================================================= */
+
+function openMileageStart(){
+
+  const v =
+    loadVehicle();
+
+
+  const input =
+    document.getElementById(
+      "mileageStartInput"
+    );
+
+
+  if(
+    v &&
+    v.date === todayStr() &&
+    v.startMileage != null
+  ){
+
+    input.value =
+      v.startMileage;
+
+  }else{
+
+    input.value = "";
+
+  }
+
+
+  document
+    .getElementById(
+      "mileageStartOverlay"
+    )
+    .classList.add("show");
+
+}
+
+
+function closeMileageStart(){
+
+  document
+    .getElementById(
+      "mileageStartOverlay"
+    )
+    .classList.remove("show");
+
+}
+
+
+function submitMileageStart(){
+
+  const value =
+    document.getElementById(
+      "mileageStartInput"
+    ).value;
+
+
+  if(value === ""){
+
+    alert(
+      "走行距離を入力してください。"
+    );
+
+    return;
+
+  }
+
+
+  let v =
+    loadVehicle();
+
+
+  if(
+    !v ||
+    v.date !== todayStr()
+  ){
+
+    v = {
+
+      date:todayStr(),
+
+      startMileage:null,
+
+      endMileage:null,
+
+      fuelQuantity:null,
+
+      fuelTime:"",
+
+      fuelLocation:null
+
+    };
+
+  }
+
+
+  v.startMileage =
+    Number(value);
+
+
+  saveVehicle(
+    v
+  );
+
+
+  closeMileageStart();
+
+
+  renderHome();
+
+
+  if(mileageStartContinue){
+
+    mileageStartContinue =
+      false;
+
+    openStart();
+
+  }
+
+}
+
+
+/* =========================================================
+   帰社時走行距離
+========================================================= */
+
+function openMileageEnd(){
+
+  const v =
+    loadVehicle();
+
+
+  const input =
+    document.getElementById(
+      "mileageEndInput"
+    );
+
+
+  input.value =
+    (
+      v &&
+      v.date === todayStr() &&
+      v.endMileage != null
+    )
+    ? v.endMileage
+    : "";
+
+
+  document
+    .getElementById(
+      "mileageEndOverlay"
+    )
+    .classList.add("show");
+
+}
+
+
+function closeMileageEnd(){
+
+  document
+    .getElementById(
+      "mileageEndOverlay"
+    )
+    .classList.remove("show");
+
+}
+
+
+function submitMileageEnd(){
+
+  const value =
+    document.getElementById(
+      "mileageEndInput"
+    ).value;
+
+
+  if(value === ""){
+
+    alert(
+      "走行距離を入力してください。"
+    );
+
+    return;
+
+  }
+
+
+  let v =
+    loadVehicle();
+
+
+  if(
+    !v ||
+    v.date !== todayStr()
+  ){
+
+    v = {
+
+      date:todayStr(),
+
+      startMileage:null,
+
+      endMileage:null,
+
+      fuelQuantity:null,
+
+      fuelTime:"",
+
+      fuelLocation:null
+
+    };
+
+  }
+
+
+  v.endMileage =
+    Number(value);
+
+
+  saveVehicle(
+    v
+  );
+
+
+  closeMileageEnd();
+
+
+  renderHome();
+
+}
+
+
+/* =========================================================
+   全消去
+========================================================= */
+
+function clearLogConfirm(){
+
+  const logs =
+    loadLog();
+
+
+  const vehicle =
+    loadVehicle();
+
+
+  const hasData =
+    logs.length > 0 ||
+    vehicle !== null;
+
+
+  if(!hasData){
+
+    alert(
+      "消去するデータがありません。"
+    );
+
+    return;
+
+  }
+
+
+  if(
+    !confirm(
+      "営業日報と車両情報をすべて消去します。\n\nPC側への取り込みが完了していることを確認してください。\n\n本当に消去しますか？"
+    )
+  ){
+
+    return;
+
+  }
+
+
+  localStorage.removeItem(
+    LOG_KEY
+  );
+
+
+  localStorage.removeItem(
+    VEHICLE_KEY
+  );
+
+
+  openLog();
+
+}
+
+
+/* =========================================================
+   初期化
+========================================================= */
+
+function init(){
+
+  refreshBadge();
+
+  renderHome();
+
+}
+
+
+init();
+
+</script>
+
+</body>
+</html>
